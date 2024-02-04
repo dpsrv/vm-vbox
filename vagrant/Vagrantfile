@@ -53,8 +53,6 @@ _EOT_
 		config.vm.synced_folder dir, dir
 	end
 
-	#config.vm.provision 'shell', inline: 'user_data'
-
 	config.vm.provider 'virtualbox' do |vb|
 		vb.name		= 'docker'
 
@@ -67,4 +65,9 @@ _EOT_
 		vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
 		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 	end
+
+	#config.vm.provision 'shell', inline: 'user_data'
+
+	config.vm.cloud_init content_type: "text/x-shellscript", path: "./user_data"
+
 end
