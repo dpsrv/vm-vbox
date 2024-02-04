@@ -44,7 +44,8 @@ _EOT_
 
 	config.vm.synced_folder	'/Users', '/Users'
 	config.vm.synced_folder	'.', '/vagrant'
-	config.vm.synced_folder "#{Dir.home}/.config/git/dpsrv", '/root/.config/git/dpsrv'
+	config.vm.synced_folder "#{Dir.home}", '/home/host_user'
+	# config.vm.synced_folder "#{Dir.home}/.config/git/dpsrv", '/root/.config/git/dpsrv'
 
 	Dir.entries('/Volumes/').each do |entry|
 		dir = "/Volumes/#{entry}"

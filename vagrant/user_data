@@ -49,13 +49,6 @@ _EOT_
 cat >> /usr/local/bin/dpsrv-init.sh << _EOT_
 #!/bin/bash -ex
 resolved=\$(host "\$(hostname -s).dpsrv.me")
-if floating_ip=\$(echo "\$resolved"|awk '{ print \$4 }'); then
-
-	if ! ip a s | grep -q \$floating_ip; then
-		ip addr add \$floating_ip dev eth0
-	fi
-
-fi
 
 sysctl -w net.ipv4.conf.all.route_localnet=1
 #iptables -t nat -A POSTROUTING -m addrtype --src-type LOCAL --dst-type UNICAST -j MASQUERADE -m comment --comment dpsrv:forward:port
@@ -72,7 +65,7 @@ docker network ls | grep -q '^[^ ]*[ ]*dpsrv' || docker network create dpsrv
 for user in dpsrv ezsso; do
 	[ ! -d /mnt/data/\$user ] || continue
 	mkdir -p /mnt/data/\$user
-	cp -r ~root/{.config,.gitconfig,.git-credentials} /home/\$user/
+	cp -r /home/host_user/{.config,.gitconfig,.git-credentials} /home/\$user/
 
 	chown -R \$user:\$user /home/\$user/{.config,.gitconfig,.git-credentials} /mnt/data/\$user
 
