@@ -11,11 +11,7 @@ systemctl --now enable iptables.service ip6tables.service
 systemctl --now enable fail2ban
 systemctl --now enable docker
 
-HCLOUD_VOLUME_DATA=HC_Volume_${hcloud_volume_data_id}
-
-if [ ! -e /mnt/data ] && [ -d /mnt/\$HCLOUD_VOLUME_DATA ]; then
-	ln -s /mnt/\$HCLOUD_VOLUME_DATA /mnt/data
-fi
+mkdir -p /mnt/data
 
 for user in dpsrv ezsso; do
 	useradd -G docker $user
