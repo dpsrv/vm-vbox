@@ -37,10 +37,10 @@ _EOT_
 		config.vm.network 'public_network', bridge: bridge
 	end
 
-	#for i in 50000..51000
-		#config.vm.network :forwarded_port, guest: i, host: i, protocol: 'tcp'
-		#config.vm.network :forwarded_port, guest: i, host: i, protocol: 'udp'
-	#end
+	for i in [ 53 ]
+		config.vm.network :forwarded_port, guest: i, host: 50000+i, protocol: 'tcp'
+		config.vm.network :forwarded_port, guest: i, host: 50000+i, protocol: 'udp'
+	end
 
 	config.vm.synced_folder	'/Users', '/Users'
 	config.vm.synced_folder	'.', '/vagrant'
