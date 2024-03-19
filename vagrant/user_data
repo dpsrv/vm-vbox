@@ -13,6 +13,7 @@ systemctl --now enable docker
 
 mkdir -p /mnt/data
 
+usermod -a -G docker vagrant
 for user in dpsrv ezsso; do
 	useradd -G docker $user
 
