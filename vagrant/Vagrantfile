@@ -34,13 +34,13 @@ _EOT_
 
 	for bridgeName in `./ifs.sh`.split("\n")
 		bridge=`networksetup -listallhardwareports | grep -A 1 "Hardware Port: #{bridgeName}" | sed 's/^[^:]*: //g' | nl | sort -nr | cut -f2- | paste - - | sed $'s/[\s\t][\s\t]*/: /' | tr -d '\n'`
-		config.vm.network 'public_network', bridge: bridge
+		config.vm.network 'public_network', bridge: bridge, auto_config: false
 	end
 
-	for i in [ 53 ]
-		config.vm.network :forwarded_port, guest: i, host: 50000+i, protocol: 'tcp'
-		config.vm.network :forwarded_port, guest: i, host: 50000+i, protocol: 'udp'
-	end
+	# for i in [ 53 ]
+		# config.vm.network :forwarded_port, guest: i, host: 50000+i, protocol: 'tcp'
+		# config.vm.network :forwarded_port, guest: i, host: 50000+i, protocol: 'udp'
+	# end
 
 	config.vm.synced_folder	'/Users', '/Users'
 	config.vm.synced_folder	'.', '/vagrant'
@@ -67,6 +67,24 @@ _EOT_
 		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 	end
 
-	config.vm.provision 'shell', inline: '/vagrant/user_data'
-
+	config.vm.provision "shell",
+		env: {
+			'DPSRV_DOCKER_IF' => ENV['DPSRV_DOCKER_IF'],
+			'DPSRV_DOCKER_IPS' => ENV['DPSRV_DOCKER_IPS'],
+			'DPSRV_DOCKER_GW' => ENV['DPSRV_DOCKER_GW'],
+			'DPSRV_DOCKER_DNS' => ENV['DPSRV_DOCKER_DNS']
+		},
+		inline: <<-_EOT_
+			set -x
+			if [ -n "$DPSRV_DOCKER_IF" ]; then
+				nmcli d modify $DPSRV_DOCKER_IF ipv4.method manual
+				nmcli d modify $DPSRV_DOCKER_IF ipv4.addresses "$DPSRV_DOCKER_IPS"
+				nmcli d modify $DPSRV_DOCKER_IF ipv4.gateway "$DPSRV_DOCKER_GW"
+				nmcli d modify $DPSRV_DOCKER_IF ipv4.dns "$DPSRV_DOCKER_DNS"
+				nmcli d modify $DPSRV_DOCKER_IF connection.autoconnect yes
+				service NetworkManager restart
+			fi
+			/vagrant/user_data
+		_EOT_
 end
+
