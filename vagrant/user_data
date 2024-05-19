@@ -57,6 +57,8 @@ git clone https://github.com/\$user/rc.git
 \$user-git-clone
 \$user-git-init-secrets 
 
+[ ! -d "$DPSRV_SRV" ] || [ -e srv ] || ln -s $DPSRV_SRV srv
+
 \$user-up
 
 _EOT_

@@ -50,7 +50,7 @@ _EOT_
 	Dir.entries('/Volumes/').each do |entry|
 		dir = "/Volumes/#{entry}"
 		stat = File.stat(dir)
-		next if entry == ".." || entry == "." || not(File.directory? dir) || stat.uid != 0
+		next if entry == ".." || entry == "." || not(File.directory? dir) 
 		config.vm.synced_folder dir, dir
 	end
 
