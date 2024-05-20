@@ -29,18 +29,18 @@ mkdir -p /mnt/data
 
 usermod -a -G docker vagrant
 for user in dpsrv ezsso; do
-	useradd -G docker -d /mnt/data/$user -m $user
+	useradd -G docker -b /mnt/data/ -m $user
 
-	[ -d /home/$user/.ssh ] || mkdir /home/$user/.ssh
+	[ -d ~$user/.ssh ] || mkdir ~$user/.ssh
 
-	echo "${hcloud_ssh_key_dpsrv}" >> /home/$user/.ssh/authorized_keys
+	echo "${hcloud_ssh_key_dpsrv}" >> ~$user/.ssh/authorized_keys
 
-	chown -R $user:$user /home/$user/.ssh
-	chmod -R og-rwx /home/$user/.ssh
+	chown -R $user:$user ~$user/.ssh
+	chmod -R og-rwx ~$user/.ssh
 
-	[ -d /home/$user/.bashrc.d ] || mkdir /home/$user/.bashrc.d
-	echo ". /mnt/data/dpsrv/rc/bin/dpsrv.sh" > /home/$user/.bashrc.d/dpsrv
-	[ $user = dpsrv ] || echo ". /mnt/data/$user/rc/bin/$user.sh" > /home/$user/.bashrc.d/$user
+	[ -d ~$user/.bashrc.d ] || mkdir ~$user/.bashrc.d
+	echo ". /mnt/data/dpsrv/rc/bin/dpsrv.sh" > ~$user/.bashrc.d/dpsrv
+	[ $user = dpsrv ] || echo ". /mnt/data/$user/rc/bin/$user.sh" > ~$user/.bashrc.d/$user
 done
 
 cat >> /usr/local/bin/dpsrv-init-projects.sh << _EOT_
@@ -82,9 +82,9 @@ docker network ls | grep -q '^[^ ]*[ ]*dpsrv' || docker network create dpsrv
 for user in dpsrv ezsso; do
 	[ ! -d /mnt/data/\$user ] || continue
 	mkdir -p /mnt/data/\$user
-	cp -r /home/host_user/{.config,.gitconfig,.git-credentials} /home/\$user/
+	cp -r /home/host_user/{.config,.gitconfig,.git-credentials} ~\$user/
 
-	chown -R \$user:\$user /home/\$user/{.config,.gitconfig,.git-credentials} /mnt/data/\$user
+	chown -R \$user:\$user ~\$user/{.config,.gitconfig,.git-credentials} /mnt/data/\$user
 
 	sudo -u \$user git config --global credential.helper store
 	sudo -u \$user git config --global --add safe.directory /root/dpsrv/rc
