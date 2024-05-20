@@ -29,7 +29,7 @@ mkdir -p /mnt/data
 
 usermod -a -G docker vagrant
 for user in dpsrv ezsso; do
-	useradd -G docker $user
+	useradd -G docker -b /mnt/data/ $user
 
 	[ -d /home/$user/.ssh ] || mkdir /home/$user/.ssh
 
