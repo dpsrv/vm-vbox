@@ -34,6 +34,10 @@ DPSRV_MNT=/mnt/data
 
 [ -e $DPSRV_MNT ] || mkdir -p $DPSRV_MNT
 
+chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml
+chmod g+s /usr/local/bin/k3s
+chmod g+rw /etc/rancher/k3s/k3s.yaml
+
 usermod -a -G docker vagrant
 for user in dpsrv ezsso; do
 	useradd -G docker -b $DPSRV_MNT -m $user
