@@ -10,13 +10,12 @@ dnf install -y dnf-plugins-core iptables-services ipset policycoreutils-python-u
 dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
 dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-curl -sfL https://get.k3s.io | sh -
+curl -sfL https://get.k3s.io | sh -s - --docker
 curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
 
 cat >> /etc/profile.d/k3s.sh << _EOT_
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 _EOT_
-
 
 curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
 chmod a+x /usr/local/bin/kompose
