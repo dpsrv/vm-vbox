@@ -57,8 +57,8 @@ _EOT_
 	config.vm.provider 'virtualbox' do |vb|
 		vb.name		= 'docker'
 
-		vb.memory	= 4096
-		vb.cpus		= 3
+		vb.memory	= 8192
+		vb.cpus		= 4
 
 		vb.customize ['modifyvm', :id, '--autostart-enabled', 'on']
 		vb.customize ['modifyvm', :id, '--autostop-type', 'acpishutdown']
