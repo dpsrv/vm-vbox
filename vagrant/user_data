@@ -23,7 +23,8 @@ dnf install -y \
 	fail2ban \
 	tmux \
 	colorized-logs \
-	openssl
+	openssl \
+	net-tools
 
 dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
 dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -39,7 +40,26 @@ cat >> /etc/docker/daemon.json << _EOT_
 _EOT_
 
 systemctl --now enable iptables.service ip6tables.service
+
+cat > /tmp/fail2ban-server.te << _EOT_
+module fail2ban-server 1.0;
+
+require {
+        type var_run_t;
+        type fail2ban_t;
+        class sock_file { create getattr write unlink };
+}
+
+#============= fail2ban_t ==============
+allow fail2ban_t var_run_t:sock_file { create getattr write unlink };
+
+_EOT_
+
+checkmodule -M -m -o /tmp/fail2ban-server.mod /tmp/fail2ban-server.te
+semodule_package -o /tmp/fail2ban-server.pp -m /tmp/fail2ban-server.mod
+semodule -X 300 -i /tmp/fail2ban-server.pp
 systemctl --now enable fail2ban
+
 systemctl --now enable docker
 
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
