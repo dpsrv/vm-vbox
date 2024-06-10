@@ -24,7 +24,7 @@ systemctl --now enable iptables.service ip6tables.service
 systemctl --now enable fail2ban
 systemctl --now enable docker
 
-curl -sfL https://get.k3s.io | sh -s - --docker
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--no-deploy traefik' sh -s - --docker
 curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
 
 cat >> /etc/rancher/k3s/config.yaml << _EOT_
