@@ -27,8 +27,9 @@ _EOT_
 
 	config.vm.define 'docker'
 
-	config.vm.box		= 'fedora/39-cloud-base'
-	config.vm.hostname	= "#{ENV['DPSRV_REGION']}-#{ENV['DPSRV_NODE']}"
+	config.vm.box			= 'fedora/40-cloud-base'
+	config.vm.box_version	= '40.20240414.0'
+	config.vm.hostname		= "#{ENV['DPSRV_REGION']}-#{ENV['DPSRV_NODE']}"
 
 	config.vm.network 'private_network', type: 'dhcp'
 
@@ -56,15 +57,24 @@ _EOT_
 
 	config.vm.provider 'virtualbox' do |vb|
 		vb.name		= 'docker'
+		vb.gui		= true
 
 		vb.memory	= 8192
 		vb.cpus		= 4
 
+		vb.check_guest_additions = false
+
 		vb.customize ['modifyvm', :id, '--autostart-enabled', 'on']
 		vb.customize ['modifyvm', :id, '--autostop-type', 'acpishutdown']
+		vb.customize ['modifyvm', :id, '--ioapic', 'on']
+
+		# vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+		vb.customize ['modifyvm', :id, '--graphicscontroller', 'vboxvga']
+		vb.customize ['modifyvm', :id, '--accelerate3d', 'off']
+
 		vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
-		vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
 		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+		vb.customize ["modifyvm", :id, "--nat-localhostreachable1", "on"]
 	end
 
 	config.vm.provision "shell",
