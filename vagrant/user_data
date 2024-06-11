@@ -77,14 +77,13 @@ _EOT_
 curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
 chmod a+x /usr/local/bin/kompose
 
+chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
+chmod g+s /usr/local/bin/k3s
+chmod g+rw /etc/rancher/k3s/k3s.yaml
 
 DPSRV_MNT=/mnt/data
 
 [ -e $DPSRV_MNT ] || mkdir -p $DPSRV_MNT
-
-chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
-chmod g+s /usr/local/bin/k3s
-chmod g+rw /etc/rancher/k3s/k3s.yaml
 
 usermod -a -G docker vagrant
 for user in dpsrv ezsso; do
