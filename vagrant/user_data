@@ -1,5 +1,13 @@
 #!/bin/bash -ex
 
+cat <<_EOT_ >>  /etc/chrony.conf
+
+pool 0.pool.ntp.org
+pool 1.pool.ntp.org
+pool 2.pool.ntp.org
+pool 3.pool.ntp.org
+_EOT_
+
 # Escape spaces in fstab or root will be mounted ro
 sed -i 's/\\ /\\040/g' /etc/fstab
 
