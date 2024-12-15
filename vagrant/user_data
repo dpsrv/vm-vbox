@@ -16,8 +16,6 @@ while read script; do
 	)
 done < <(grep -L BOOTPROTO=dhcp /etc/sysconfig/network-scripts/ifcfg-*)
 
-service NetworkManager restart
-
 exit 0
 
 cat <<_EOT_ >>  /etc/chrony.conf
