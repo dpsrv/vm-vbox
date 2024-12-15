@@ -1,5 +1,25 @@
 #!/bin/bash -ex
 
+while read script; do
+	(
+		set -x
+		. $script
+		IFS=: read _ con < <(nmcli -t -f GENERAL.CONNECTION d show $DEVICE)
+		nmcli d mod "$DEVICE" \
+			ipv4.addresses $IPADDR \
+			ipv4.method manual \
+			connection.autoconnect yes
+		echo nmcli c mod "$con" \
+			ipv4.addresses $IPADDR \
+			ipv4.method manual \
+			connection.autoconnect yes
+	)
+done < <(grep -L BOOTPROTO=dhcp /etc/sysconfig/network-scripts/ifcfg-*)
+
+service NetworkManager restart
+
+exit 0
+
 cat <<_EOT_ >>  /etc/chrony.conf
 
 pool 0.pool.ntp.org
@@ -208,5 +228,4 @@ rpm --import https://www.mongodb.org/static/pgp/server-7.0.asc
 dnf install -y mongodb-mongosh-shared-openssl3
 
 systemctl --now enable dpsrv-init
-
 
