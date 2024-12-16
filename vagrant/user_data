@@ -5,12 +5,16 @@ while read script; do
 		set -x
 		. $script
 		IFS=: read _ con < <(nmcli -t -f GENERAL.CONNECTION d show $DEVICE)
+		GATEWAY_VAR=GATEWAY_${DEVICE}
+		GATEWAY=${!GATEWAY_VAR}
 		nmcli d mod "$DEVICE" \
 			ipv4.addresses $IPADDR \
+			ipv4.gateway $GATEWAY \
 			ipv4.method manual \
 			connection.autoconnect yes
 		echo nmcli c mod "$con" \
 			ipv4.addresses $IPADDR \
+			ipv4.gateway $GATEWAY \
 			ipv4.method manual \
 			connection.autoconnect yes
 	)

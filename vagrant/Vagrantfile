@@ -37,7 +37,7 @@ _EOT_
 		dev=bridge.gsub(/:.*$/, '')
 		prefix= 'DPSRV_DOCKER_'+dev;
 		if ENV[prefix + '_IP']
-			config.vm.network 'public_network', bridge: bridge, ip: ENV[prefix + '_IP']
+			config.vm.network 'public_network', bridge: bridge, ip: ENV[prefix + '_IP']+'/24'
 		else
 			config.vm.network 'public_network', bridge: bridge
 		end
@@ -78,17 +78,17 @@ _EOT_
 		#vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
 
 		#vb.customize ["modifyvm", :id, "--vram", "128"]
-		#vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
-		# vb.customize ['modifyvm', :id, '--graphicscontroller', 'vboxvga']
-		#vb.customize ['modifyvm', :id, '--accelerate3d', 'off']
-		#vb.customize ['modifyvm', :id, '--accelerate2dvideo', 'off']
+		vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
 
-		vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
-		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+		#vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
+		#vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 		#vb.customize ["modifyvm", :id, "--nat-localhostreachable1", "on"]
 	end
 
 	config.vm.provision "shell",
+		env: {
+			'GATEWAY_eth2' => ENV['DPSRV_DOCKER_en0_GW']
+		},
 		inline: <<-_EOT_
 			set -x
 			/vagrant/user_data
