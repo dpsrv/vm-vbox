@@ -1,24 +1,30 @@
 #!/bin/bash -ex
 
-while read script; do
+while IFS=: read DEVICE CONNECTION; do
 	(
 		set -x
-		. $script
-		IFS=: read _ con < <(nmcli -t -f GENERAL.CONNECTION d show $DEVICE)
-		GATEWAY_VAR=GATEWAY_${DEVICE}
-		GATEWAY=${!GATEWAY_VAR}
+
+		IP_VAR=NM_C_${DEVICE}_IP
+		IP=${!IP_VAR}
+
+		GW_VAR=NM_C_${DEVICE}_GW
+		GW=${!GW_VAR}
+
+		[ -n "$IP" ] && [ -n "$GW" ] || exit 0
+
 		nmcli d mod "$DEVICE" \
-			ipv4.addresses $IPADDR \
-			ipv4.gateway $GATEWAY \
+			ipv4.addresses $IP \
+			ipv4.gateway $GW \
 			ipv4.method manual \
 			connection.autoconnect yes
-		echo nmcli c mod "$con" \
-			ipv4.addresses $IPADDR \
-			ipv4.gateway $GATEWAY \
+
+		nmcli c mod "$CONNECTION" \
+			ipv4.addresses $IP\
+			ipv4.gateway $GW \
 			ipv4.method manual \
 			connection.autoconnect yes
 	)
-done < <(grep -L BOOTPROTO=dhcp /etc/sysconfig/network-scripts/ifcfg-*)
+done < <(nmcli -t -f device,name c s)
 
 cat <<_EOT_ >>  /etc/chrony.conf
 
@@ -52,9 +58,10 @@ dnf install -y \
 	tmux \
 	colorized-logs \
 	openssl \
-	net-tools
+	net-tools \
+	jq
 
-dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+dnf config-manager addrepo  --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
 dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 cat >> /etc/docker/daemon.json << _EOT_
@@ -90,25 +97,25 @@ systemctl --now enable fail2ban
 
 systemctl --now enable docker
 
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
+#curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
 
-[ -f /etc/rancher/k3s/config.yaml ] || cat > /etc/rancher/k3s/config.yaml << _EOT_
-write-kubeconfig-mode: "0644"
-cluster-init: true
-_EOT_
+#[ -f /etc/rancher/k3s/config.yaml ] || cat > /etc/rancher/k3s/config.yaml << _EOT_
+#write-kubeconfig-mode: "0644"
+#cluster-init: true
+#_EOT_
 
-[ -f /etc/profile.d/k3s.sh ] || cat > /etc/profile.d/k3s.sh << _EOT_
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-_EOT_
+#[ -f /etc/profile.d/k3s.sh ] || cat > /etc/profile.d/k3s.sh << _EOT_
+#export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+#_EOT_
 
-chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
-chmod g+s /usr/local/bin/k3s
-chmod g+rw /etc/rancher/k3s/k3s.yaml
+#chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
+#chmod g+s /usr/local/bin/k3s
+#chmod g+rw /etc/rancher/k3s/k3s.yaml
 
-curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
+#curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
 
-curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
-chmod a+x /usr/local/bin/kompose
+#curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
+#chmod a+x /usr/local/bin/kompose
 
 DPSRV_MNT=/mnt/data
 
