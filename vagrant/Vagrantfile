@@ -36,7 +36,7 @@ _EOT_
 		dev=bridge.gsub(/:.*$/, '')
 		prefix= 'DPSRV_DOCKER_'+dev;
 		if ENV[prefix + '_IP']
-			config.vm.network 'public_network', bridge: bridge, ip: "#{ENV[prefix + '_IP']}/24"
+			config.vm.network 'public_network', bridge: bridge, ip: "#{ENV[prefix + '_IP']}/24", use_dhcp_assigned_default_route: true
 		else
 			config.vm.network 'public_network', bridge: bridge
 		end

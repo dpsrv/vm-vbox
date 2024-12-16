@@ -26,6 +26,12 @@ while IFS=: read DEVICE CONNECTION; do
 	)
 done < <(nmcli -t -f device,name c s)
 
+ip route show | grep ^default | head -n -1 | while read default via ip; do 
+	ip route del default via $ip
+done
+
+exit 0
+
 cat <<_EOT_ >>  /etc/chrony.conf
 
 pool 0.pool.ntp.org
