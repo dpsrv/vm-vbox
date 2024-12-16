@@ -99,25 +99,25 @@ systemctl --now enable fail2ban
 
 systemctl --now enable docker
 
-#curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
 
-#[ -f /etc/rancher/k3s/config.yaml ] || cat > /etc/rancher/k3s/config.yaml << _EOT_
-#write-kubeconfig-mode: "0644"
-#cluster-init: true
-#_EOT_
+[ -f /etc/rancher/k3s/config.yaml ] || cat > /etc/rancher/k3s/config.yaml << _EOT_
+write-kubeconfig-mode: "0644"
+cluster-init: true
+_EOT_
 
-#[ -f /etc/profile.d/k3s.sh ] || cat > /etc/profile.d/k3s.sh << _EOT_
-#export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-#_EOT_
+[ -f /etc/profile.d/k3s.sh ] || cat > /etc/profile.d/k3s.sh << _EOT_
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+_EOT_
 
-#chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
-#chmod g+s /usr/local/bin/k3s
-#chmod g+rw /etc/rancher/k3s/k3s.yaml
+chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
+chmod g+s /usr/local/bin/k3s
+chmod g+rw /etc/rancher/k3s/k3s.yaml
 
-#curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
+curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
 
-#curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
-#chmod a+x /usr/local/bin/kompose
+curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
+chmod a+x /usr/local/bin/kompose
 
 DPSRV_MNT=/mnt/data
 
