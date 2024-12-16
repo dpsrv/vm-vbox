@@ -88,7 +88,8 @@ _EOT_
 	config.vm.provision "shell",
 		env: {
 			'NM_C_enp0s9_GW' => ENV['DPSRV_DOCKER_en0_GW'],
-			'NM_C_enp0s9_IP' => ENV['DPSRV_DOCKER_en0_IP']
+			'NM_C_enp0s9_IP' => ENV['DPSRV_DOCKER_en0_IP'],
+			'NM_C_DEFAULT_GW' => 'enp0s9'
 		},
 		inline: <<-_EOT_
 			set -x

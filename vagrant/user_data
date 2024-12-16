@@ -1,34 +1,32 @@
 #!/bin/bash -ex
 
 while IFS=: read DEVICE CONNECTION; do
-	(
-		set -x
+	IP_VAR=NM_C_${DEVICE}_IP
+	IP=${!IP_VAR}
 
-		IP_VAR=NM_C_${DEVICE}_IP
-		IP=${!IP_VAR}
+	GW_VAR=NM_C_${DEVICE}_GW
+	GW=${!GW_VAR}
 
-		GW_VAR=NM_C_${DEVICE}_GW
-		GW=${!GW_VAR}
+	[ -n "$IP" ] && [ -n "$GW" ] || continue
 
-		[ -n "$IP" ] && [ -n "$GW" ] || exit 0
+	nmcli d mod "$DEVICE" \
+		ipv4.addresses $IP \
+		ipv4.gateway $GW \
+		ipv4.method manual \
+		connection.autoconnect yes
 
-		nmcli d mod "$DEVICE" \
-			ipv4.addresses $IP \
-			ipv4.gateway $GW \
-			ipv4.method manual \
-			connection.autoconnect yes
+	nmcli c mod "$CONNECTION" \
+		ipv4.addresses $IP\
+		ipv4.gateway $GW \
+		ipv4.method manual \
+		connection.autoconnect yes
 
-		nmcli c mod "$CONNECTION" \
-			ipv4.addresses $IP\
-			ipv4.gateway $GW \
-			ipv4.method manual \
-			connection.autoconnect yes
-	)
+	if [ "$DEVICE" = "$NM_C_DEFAULT_GW" ]; then
+		ip route del default || true
+		ip route add default via $GW dev $DEVICE
+	fi
+
 done < <(nmcli -t -f device,name c s)
-
-ip route show | grep ^default | head -n -1 | while read default via ip; do 
-	ip route del default via $ip
-done
 
 cat <<_EOT_ >>  /etc/chrony.conf
 
