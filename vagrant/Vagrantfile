@@ -91,6 +91,8 @@ _EOT_
 		#vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
 		#vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
 		#vb.customize ["modifyvm", :id, "--nat-localhostreachable1", "on"]
+
+		# vb.customize ["setextradata", :id, "VBoxInternal/Devices/VMMDev/0/Config/HeartbeatTimeout", "300000000000"]
 	end
 
 	config.vm.provision "shell",
