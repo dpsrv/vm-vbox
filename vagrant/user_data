@@ -12,12 +12,14 @@ while IFS=: read DEVICE CONNECTION; do
 	nmcli d mod "$DEVICE" \
 		ipv4.addresses $IP \
 		ipv4.gateway $GW \
+		ipv4.route-metric 99 \
 		ipv4.method manual \
 		connection.autoconnect yes
 
 	nmcli c mod "$CONNECTION" \
 		ipv4.addresses $IP\
 		ipv4.gateway $GW \
+		ipv4.route-metric 99 \
 		ipv4.method manual \
 		connection.autoconnect yes
 
@@ -30,7 +32,7 @@ if [ "$NM_C_DEFAULT_GW_SET" = "true" ]; then
 	ip r s
 	while IFS=: read DEVICE CONNECTION; do
 		nmcli c mod "$CONNECTION" ipv4.never-default yes ipv6.never-default yes
-		ip r d default dev $DEVICE || true
+		#ip r d default dev $DEVICE || true
 	done < <(nmcli -t -f device,name c s | grep -v "^$NM_C_DEFAULT_GW:")
 	ip r s
 fi
