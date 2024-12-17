@@ -26,10 +26,16 @@ _EOT_
 
 	config.vm.define 'docker'
 
-	config.vm.box			= 'fedora/41-cloud-base'
+	config.vm.box			= 'fedora/39-cloud-base'
+	#config.vm.box			= 'fedora/41-cloud-base'
 	#config.vm.box_version	= '41-20241024.0'
 
 	config.vm.hostname		= "#{ENV['DPSRV_REGION']}-#{ENV['DPSRV_NODE']}"
+
+	config.vm.disk :disk, size: "50GB", primary: true
+
+	#default_if = 'enp0s9'
+	default_if = 'eth2'
 
 	config.vm.network 'private_network', type: 'dhcp'
 
@@ -89,9 +95,9 @@ _EOT_
 
 	config.vm.provision "shell",
 		env: {
-			'NM_C_enp0s9_GW' => ENV['DPSRV_DOCKER_en0_GW'],
-			'NM_C_enp0s9_IP' => ENV['DPSRV_DOCKER_en0_IP'],
-			'NM_C_DEFAULT_GW' => 'enp0s9'
+			"NM_C_#{default_if}_GW" => ENV['DPSRV_DOCKER_en0_GW'],
+			"NM_C_#{default_if}_IP" => ENV['DPSRV_DOCKER_en0_IP'],
+			'NM_C_DEFAULT_GW' => default_if
 		},
 		inline: <<-_EOT_
 			set -x
