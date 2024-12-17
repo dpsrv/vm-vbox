@@ -22,11 +22,18 @@ while IFS=: read DEVICE CONNECTION; do
 		connection.autoconnect yes
 
 	if [ "$DEVICE" = "$NM_C_DEFAULT_GW" ]; then
-		ip route del default || true
-		ip route add default via $GW dev $DEVICE
+		export NM_C_DEFAULT_GW_SET=true
 	fi
-
 done < <(nmcli -t -f device,name c s)
+
+if [ "$NM_C_DEFAULT_GW_SET" = "true" ]; then
+	ip r s
+	while IFS=: read DEVICE CONNECTION; do
+		nmcli c mod "$CONNECTION" ipv4.never-default yes ipv6.never-default yes
+		ip r d default dev $DEVICE || true
+	done < <(nmcli -t -f device,name c s | grep -v "^$NM_C_DEFAULT_GW:")
+	ip r s
+fi
 
 cat <<_EOT_ >>  /etc/chrony.conf
 
