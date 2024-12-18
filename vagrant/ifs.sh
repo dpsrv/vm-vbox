@@ -23,8 +23,8 @@ while read line; do
 
 	if [ "$state" = "device" ]; then
 		dev=$(echo "$line" | cut -d" " -f2-)
-		ip4=$(ifconfig $dev | grep inet\ | awk '{ print $2 }' |grep -v 'does not exist')
-		ip6=$(ifconfig $dev | grep inet6\ | awk '{ print $2 }' |grep -v 'does not exist')
+		ip4=$(ifconfig $dev | grep inet\ | awk '{ print $2 }' |grep -v 'does not exist' || true)
+		ip6=$(ifconfig $dev | grep inet6\ | awk '{ print $2 }' |grep -v 'does not exist' || true)
 		state=skip
 		continue
 	fi

@@ -32,7 +32,6 @@ if [ "$NM_C_DEFAULT_GW_SET" = "true" ]; then
 	ip r s
 	while IFS=: read DEVICE CONNECTION; do
 		nmcli c mod "$CONNECTION" ipv4.never-default yes ipv6.never-default yes
-		#ip r d default dev $DEVICE || true
 	done < <(nmcli -t -f device,name c s | grep -v "^$NM_C_DEFAULT_GW:")
 	ip r s
 fi
