@@ -55,6 +55,7 @@ dnf install -y \
 	virtualbox-guest-additions \
 	iptables-services \
 	ipset \
+	traceroute \
 	policycoreutils-python-utils \
 	setools-console \
 	setroubleshoot-server \
