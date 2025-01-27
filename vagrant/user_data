@@ -1,5 +1,11 @@
 #!/bin/bash -ex
 
+DPSRV_LOCAL=/etc/dpsrv
+if ! mkdir -p $DPSRV_LOCAL; then
+	echo "$DPSRV_LOCAL already exists. Skipping init."
+	exit 0
+fi
+
 while IFS=: read DEVICE CONNECTION; do
 	IP_VAR=NM_C_${DEVICE}_IP
 	IP=${!IP_VAR}
