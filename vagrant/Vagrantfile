@@ -72,7 +72,7 @@ _EOT_
 		# vb.gui		= true
 
 		vb.memory	= 8192
-		vb.cpus		= 4
+		vb.cpus		= 8
 
 		vb.check_guest_additions = true
 
