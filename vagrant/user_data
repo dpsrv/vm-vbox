@@ -116,6 +116,13 @@ systemctl --now enable fail2ban
 
 systemctl --now enable docker
 
+cat > /etc/cron.daily/docker-builder-prune.sh << _EOT_
+#!/usr/bin/bash
+
+docker builder prune -f
+_EOT_
+chmod a+x /etc/cron.daily/docker-builder-prune.sh
+
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
 
 [ -f /etc/rancher/k3s/config.yaml ] || cat > /etc/rancher/k3s/config.yaml << _EOT_
