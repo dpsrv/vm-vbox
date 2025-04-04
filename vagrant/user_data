@@ -16,14 +16,14 @@ while IFS=: read DEVICE CONNECTION; do
 	[ -n "$IP" ] && [ -n "$GW" ] || continue
 
 	nmcli d mod "$DEVICE" \
-		ipv4.addresses $IP \
+		ipv4.addresses $IP/24 \
 		ipv4.gateway $GW \
 		ipv4.route-metric 99 \
 		ipv4.method manual \
 		connection.autoconnect yes
 
 	nmcli c mod "$CONNECTION" \
-		ipv4.addresses $IP\
+		ipv4.addresses $IP/24\
 		ipv4.gateway $GW \
 		ipv4.route-metric 99 \
 		ipv4.method manual \
