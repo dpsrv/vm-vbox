@@ -65,6 +65,7 @@ dnf install -y \
 	policycoreutils-python-utils \
 	setools-console \
 	setroubleshoot-server \
+	ntpsec \
 	bind-utils \
 	nc \
 	git \
@@ -93,6 +94,7 @@ cat >> /etc/docker/daemon.json << _EOT_
 }
 _EOT_
 
+systemctl --now enable ntpd.service
 systemctl --now enable iptables.service ip6tables.service
 
 cat > /tmp/fail2ban-server.te << _EOT_
