@@ -90,7 +90,7 @@ _EOT_
 
 		#vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
 		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-		vb.customize ["modifyvm", :id, "--nat-localhostreachable1", "on"]
+		#vb.customize ["modifyvm", :id, "--nat-localhostreachable1", "on"]
 		vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
 
 
@@ -101,7 +101,10 @@ _EOT_
 		env: {
 			"NM_C_#{default_if}_GW" => ENV['DPSRV_DOCKER_en0_GW'],
 			"NM_C_#{default_if}_IP" => ENV['DPSRV_DOCKER_en0_IP'],
-			'NM_C_DEFAULT_GW' => default_if
+			'NM_C_DEFAULT_GW' => default_if,
+
+			'DPSRV_REGION' => ENV['DPSRV_REGION'],
+			'DPSRV_NODE' => ENV['DPSRV_NODE']
 		},
 		inline: <<-_EOT_
 			set -x

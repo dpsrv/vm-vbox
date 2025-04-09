@@ -53,6 +53,11 @@ _EOT_
 # Escape spaces in fstab or root will be mounted ro
 sed -i 's/\\ /\\040/g' /etc/fstab
 
+cat >> /etc/profile.d/dpsrv.sh << _EOT_
+export DPSRV_REGION=${DPSRV_REGION}
+export DPSRV_NODE=${DPSRV_NODE}
+_EOT_
+
 echo 'DNSStubListener=no' >> /etc/systemd/resolved.conf
 systemctl restart systemd-resolved
 
