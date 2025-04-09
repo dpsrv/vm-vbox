@@ -197,6 +197,7 @@ _EOT_
 
 cat >> /usr/local/bin/dpsrv-init.sh << _EOT_
 #!/bin/bash -ex
+. /etc/profile.d/dpsrv.sh
 resolved=\$(host "\$(hostname -s).dpsrv.me")
 
 sysctl -w net.ipv4.conf.all.route_localnet=1
