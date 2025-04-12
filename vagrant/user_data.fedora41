@@ -66,6 +66,7 @@ dnf install -y \
 	virtualbox-guest-additions \
 	net-tools \
 	iptables-services \
+	iptables-legacy \
 	ipset \
 	traceroute \
 	policycoreutils-python-utils \
