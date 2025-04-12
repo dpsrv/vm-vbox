@@ -1,0 +1,276 @@
+#!/bin/bash -ex
+
+DPSRV_LOCAL=/etc/dpsrv
+if ! mkdir -p $DPSRV_LOCAL; then
+	echo "$DPSRV_LOCAL already exists. Skipping init."
+	exit 0
+fi
+
+while IFS=: read DEVICE CONNECTION; do
+	IP_VAR=NM_C_${DEVICE}_IP
+	IP=${!IP_VAR}
+
+	GW_VAR=NM_C_${DEVICE}_GW
+	GW=${!GW_VAR}
+
+	[ -n "$IP" ] && [ -n "$GW" ] || continue
+
+	nmcli d mod "$DEVICE" \
+		ipv4.addresses $IP/24 \
+		ipv4.gateway $GW \
+		ipv4.route-metric 99 \
+		ipv4.method manual \
+		connection.autoconnect yes
+
+	nmcli c mod "$CONNECTION" \
+		ipv4.addresses $IP/24\
+		ipv4.gateway $GW \
+		ipv4.route-metric 99 \
+		ipv4.method manual \
+		connection.autoconnect yes
+
+	if [ "$DEVICE" = "$NM_C_DEFAULT_GW" ]; then
+		export NM_C_DEFAULT_GW_SET=true
+	fi
+done < <(nmcli -t -f device,name c s)
+
+if [ "$NM_C_DEFAULT_GW_SET" = "true" ]; then
+	ip r s
+	while IFS=: read DEVICE CONNECTION; do
+		nmcli c mod "$CONNECTION" ipv4.never-default yes ipv6.never-default yes
+	done < <(nmcli -t -f device,name c s | grep -v "^$NM_C_DEFAULT_GW:")
+	ip r s
+fi
+
+cat <<_EOT_ >>  /etc/chrony.conf
+
+pool 0.pool.ntp.org
+pool 1.pool.ntp.org
+pool 2.pool.ntp.org
+pool 3.pool.ntp.org
+_EOT_
+
+# Escape spaces in fstab or root will be mounted ro
+sed -i 's/\\ /\\040/g' /etc/fstab
+
+cat >> /etc/profile.d/dpsrv.sh << _EOT_
+export DPSRV_REGION=${DPSRV_REGION}
+export DPSRV_NODE=${DPSRV_NODE}
+_EOT_
+
+echo 'DNSStubListener=no' >> /etc/systemd/resolved.conf
+systemctl restart systemd-resolved
+
+dnf install -y \
+	dnf-plugins-core \
+	virtualbox-guest-additions \
+	net-tools \
+	iptables-services \
+	ipset \
+	traceroute \
+	policycoreutils-python-utils \
+	setools-console \
+	setroubleshoot-server \
+	ntpsec \
+	bind-utils \
+	nc \
+	git \
+	bzip2 \
+	tcpdump \
+	cronie \
+	fail2ban \
+	tmux \
+	colorized-logs \
+	openssl \
+	net-tools \
+	jq
+
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+
+dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
+
+dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+cat >> /etc/docker/daemon.json << _EOT_
+{
+	"log-driver": "json-file",
+	"log-opts": {
+		"max-size": "10m",
+		"max-file": "3"
+	}
+}
+_EOT_
+
+systemctl --now enable ntpd.service
+systemctl --now enable iptables.service ip6tables.service
+
+cat > /tmp/fail2ban-server.te << _EOT_
+module fail2ban-server 1.0;
+
+require {
+        type var_run_t;
+        type fail2ban_t;
+        class sock_file { create getattr write unlink };
+}
+
+#============= fail2ban_t ==============
+allow fail2ban_t var_run_t:sock_file { create getattr write unlink };
+
+_EOT_
+
+checkmodule -M -m -o /tmp/fail2ban-server.mod /tmp/fail2ban-server.te
+semodule_package -o /tmp/fail2ban-server.pp -m /tmp/fail2ban-server.mod
+semodule -X 300 -i /tmp/fail2ban-server.pp
+systemctl --now enable fail2ban
+
+systemctl --now enable docker
+
+cat > /etc/cron.daily/docker-builder-prune.sh << _EOT_
+#!/usr/bin/bash
+
+docker builder prune -f
+_EOT_
+chmod a+x /etc/cron.daily/docker-builder-prune.sh
+
+systemctl --now enable crond
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--disable traefik' sh -s - --docker
+
+[ -f /etc/rancher/k3s/config.yaml ] || cat > /etc/rancher/k3s/config.yaml << _EOT_
+write-kubeconfig-mode: "0644"
+cluster-init: true
+_EOT_
+
+[ -f /etc/profile.d/k3s.sh ] || cat > /etc/profile.d/k3s.sh << _EOT_
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+_EOT_
+
+chgrp docker /usr/local/bin/k3s /etc/rancher/k3s/k3s.yaml /etc/rancher/k3s/config.yaml
+chmod g+s /usr/local/bin/k3s
+chmod g+rw /etc/rancher/k3s/k3s.yaml
+
+curl -sfL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh -
+
+curl -L https://github.com/kubernetes/kompose/releases/download/v1.33.0/kompose-linux-amd64 -o /usr/local/bin/kompose
+chmod a+x /usr/local/bin/kompose
+
+DPSRV_MNT=/mnt/data
+
+[ -e $DPSRV_MNT ] || mkdir -p $DPSRV_MNT
+
+usermod -a -G docker vagrant
+for user in dpsrv ezsso; do
+	useradd -G docker -b $DPSRV_MNT -m $user
+
+	[ -d $DPSRV_MNT/$user/.ssh ] || mkdir $DPSRV_MNT/$user/.ssh
+
+	echo "${hcloud_ssh_key_dpsrv}" >> $DPSRV_MNT/$user/.ssh/authorized_keys
+
+	chown -R $user:$user $DPSRV_MNT/$user/.ssh
+	chmod -R og-rwx $DPSRV_MNT/$user/.ssh
+
+	[ -d $DPSRV_MNT/$user/.bashrc.d ] || mkdir $DPSRV_MNT/$user/.bashrc.d
+	echo ". $DPSRV_MNT/dpsrv/rc/bin/dpsrv.sh" > $DPSRV_MNT/$user/.bashrc.d/dpsrv
+	[ $user = dpsrv ] || echo ". $DPSRV_MNT/$user/rc/bin/$user.sh" > $DPSRV_MNT/$user/.bashrc.d/$user
+done
+
+cat >> /usr/local/bin/dpsrv-init-projects.sh << _EOT_
+#!/bin/bash -ex
+user=\$1
+
+pushd $DPSRV_MNT/\$user
+git clone https://github.com/maxfortun/git-openssl-secrets.git
+pushd git-openssl-secrets
+ln -s git-setenv-openssl-secrets-fs.sh git-setenv-openssl-secrets.sh
+popd >/dev/null
+git clone https://github.com/\$user/rc.git
+pushd rc
+../git-openssl-secrets/git-init-openssl-secrets.sh
+popd >/dev/null
+. rc/bin/\$user.sh
+\$user-git-clone
+\$user-git-init-secrets 
+
+#[ ! -d "$DPSRV_SRV" ] || [ -e srv ] || ln -s $DPSRV_SRV srv
+
+\$user-up
+
+_EOT_
+
+cat >> /usr/local/bin/dpsrv-init.sh << _EOT_
+#!/bin/bash -ex
+. /etc/profile.d/dpsrv.sh
+resolved=\$(host "\$(hostname -s).dpsrv.me")
+
+sysctl -w net.ipv4.conf.all.route_localnet=1
+#iptables -t nat -A POSTROUTING -m addrtype --src-type LOCAL --dst-type UNICAST -j MASQUERADE -m comment --comment dpsrv:forward:port
+
+while [ -f ~/.config/openssl-salt ]; do
+	echo "Waiting for ~/.config"
+	sleep 2
+done
+
+export HOME=\$\{HOME:-/root}
+
+docker network ls | grep -q '^[^ ]*[ ]*dpsrv' || docker network create dpsrv
+
+for user in dpsrv ezsso; do
+	[ ! -e $DPSRV_MNT/\$user/.config ] || continue
+
+	mkdir -p $DPSRV_MNT/\$user
+	cp -r /home/host_user/{.config,.gitconfig,.git-credentials} $DPSRV_MNT/\$user/
+
+	chown -R \$user:\$user $DPSRV_MNT/\$user/{.config,.gitconfig,.git-credentials} $DPSRV_MNT/\$user
+
+	sudo -u \$user git config --global credential.helper store
+	sudo -u \$user git config --global --add safe.directory /root/dpsrv/rc
+
+	sudo -u \$user /usr/local/bin/dpsrv-init-projects.sh \$user
+done
+
+. $DPSRV_MNT/dpsrv/rc/bin/dpsrv.sh
+dpsrv-activate-latest
+
+bridgeIP=\$(docker network inspect --format '{{(index .IPAM.Config 0).Gateway}}' dpsrv)
+bridgeLabel=\$(ip -json address show to "\$bridgeIP/32"|jq -r '.[].addr_info[].label')
+ifconfig \$bridgeLabel promisc
+
+_EOT_
+
+chmod a+x /usr/local/bin/dpsrv-init*.sh
+
+cat >> /usr/lib/systemd/system/dpsrv-init.service << _EOT_
+[Unit]
+Description=DPSRV init
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/dpsrv-init.sh
+
+[Install]
+WantedBy=multi-user.target 
+
+_EOT_
+
+cat >> /etc/sudoers.d/dpsrv << _EOT_
+dpsrv ALL=(ALL) NOPASSWD:/sbin/iptables,/sbin/ip6tables,/sbin/iptables-save,/sbin/ip6tables-save,/usr/bin/tee /etc/sysconfig/iptables,/usr/bin/tee /etc/sysconfig/ip6tables
+_EOT_
+
+cat >> /etc/sudoers.d/ezsso << _EOT_
+ezsso ALL=(ALL) NOPASSWD:/sbin/iptables,/sbin/ip6tables,/sbin/iptables-save,/sbin/ip6tables-save,/usr/bin/tee /etc/sysconfig/iptables,/usr/bin/tee /etc/sysconfig/ip6tables
+_EOT_
+
+cat >> /etc/yum.repos.d/mongodb.repo << _EOT_
+[mongodb]
+name=MongoDB
+baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/7.0/\$\{basearch}/
+gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+_EOT_
+
+rpm --import https://www.mongodb.org/static/pgp/server-7.0.asc
+dnf install -y mongodb-mongosh-shared-openssl3
+
+systemctl --now enable dpsrv-init
+
