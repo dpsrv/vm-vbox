@@ -1,10 +1,24 @@
 #!/bin/bash -ex
 
+# Claim remainder of the disk
+fdisk /dev/sda <<_EOT_
+n
+
+
+
+w
+_EOT_
+mkfs -t ext4 /dev/sda5
+systemctl daemon-reload
+mkdir -p /mnt/docker-data
+mount /dev/sda5 /mnt/docker-data
+
 DPSRV_LOCAL=/etc/dpsrv
 if ! mkdir -p $DPSRV_LOCAL; then
 	echo "$DPSRV_LOCAL already exists. Skipping init."
 	exit 0
 fi
+
 
 while IFS=: read DEVICE CONNECTION; do
 	IP_VAR=NM_C_${DEVICE}_IP
