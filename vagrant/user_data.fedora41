@@ -1,5 +1,11 @@
 #!/bin/bash -ex
 
+DPSRV_LOCAL=/etc/dpsrv
+if ! mkdir -p $DPSRV_LOCAL; then
+	echo "$DPSRV_LOCAL already exists. Skipping init."
+	exit 0
+fi
+
 # Claim remainder of the disk
 fdisk /dev/sda <<_EOT_
 n
@@ -12,13 +18,6 @@ mkfs -t ext4 /dev/sda5
 systemctl daemon-reload
 mkdir -p /mnt/docker-data
 mount /dev/sda5 /mnt/docker-data
-
-DPSRV_LOCAL=/etc/dpsrv
-if ! mkdir -p $DPSRV_LOCAL; then
-	echo "$DPSRV_LOCAL already exists. Skipping init."
-	exit 0
-fi
-
 
 while IFS=: read DEVICE CONNECTION; do
 	IP_VAR=NM_C_${DEVICE}_IP
@@ -63,6 +62,8 @@ cat >> /etc/profile.d/dpsrv.sh << _EOT_
 export DPSRV_REGION=${DPSRV_REGION}
 export DPSRV_NODE=${DPSRV_NODE}
 _EOT_
+
+exit 0
 
 dnf install -y git
 
