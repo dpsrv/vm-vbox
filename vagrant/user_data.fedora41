@@ -63,8 +63,6 @@ export DPSRV_REGION=${DPSRV_REGION}
 export DPSRV_NODE=${DPSRV_NODE}
 _EOT_
 
-exit 0
-
 dnf install -y git
 
 cp -r /home/host_user/{.config,.gitconfig,.git-credentials} /root/
