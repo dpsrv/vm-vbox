@@ -19,6 +19,15 @@ systemctl daemon-reload
 mkdir -p /mnt/docker-data
 mount /dev/sda5 /mnt/docker-data
 
+systemctl disable systemd-resolved --now
+
+cat <<_EOT_ >> /etc/NetworkManager/NetworkManager.conf
+[main]
+dns=none
+_EOT_
+
+mv /etc/resolv.conf /etc/resolv.conf.bak
+
 while IFS=: read DEVICE CONNECTION; do
 	IP_VAR=NM_C_${DEVICE}_IP
 	IP=${!IP_VAR}
@@ -27,6 +36,8 @@ while IFS=: read DEVICE CONNECTION; do
 	GW=${!GW_VAR}
 
 	[ -n "$IP" ] && [ -n "$GW" ] || continue
+
+	echo "nameserver $IP" >> /etc/resolv.conf
 
 	nmcli d mod "$DEVICE" \
 		ipv4.addresses $IP/24 \
@@ -54,6 +65,11 @@ if [ "$NM_C_DEFAULT_GW_SET" = "true" ]; then
 	done < <(nmcli -t -f device,name c s | grep -v "^$NM_C_DEFAULT_GW:")
 	ip r s
 fi
+
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+
+[ -f /etc/resolv.conf ] || mv /etc/resolv.conf.bak /etc/resolv.conf
 
 # Escape spaces in fstab or root will be mounted ro
 sed -i 's/\\ /\\040/g' /etc/fstab
