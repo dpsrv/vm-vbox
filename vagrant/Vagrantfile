@@ -35,7 +35,7 @@ _EOT_
 
 	config.vm.hostname		= "#{ENV['DPSRV_REGION']}-#{ENV['DPSRV_NODE']}"
 
-	config.vm.disk :disk, size: "50GB", primary: true
+	config.vm.disk :disk, size: '50GB', primary: true
 
 	default_if = 'enp0s9'
 	#default_if = 'eth2'
@@ -66,7 +66,7 @@ _EOT_
 	Dir.entries('/Volumes/').each do |entry|
 		dir = "/Volumes/#{entry}"
 		stat = File.stat(dir)
-		next if entry == ".." || entry == "." || not(File.directory? dir) 
+		next if entry == '..' || entry == '.' || not(File.directory? dir) 
 		config.vm.synced_folder dir, dir
 	end
 
@@ -75,11 +75,15 @@ _EOT_
 		# vb.gui		= true
 
 		vb.memory	= 16384
-		vb.cpus		= 8
+		vb.cpus		= 6
 
 		vb.check_guest_additions = true
 
 		vb.customize ['modifyvm', :id, '--ioapic', 'on']
+		vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+		vb.customize ['modifyvm', :id, '--paravirtprovider', 'kvm']
+
+		vb.customize ['storagectl', :id, '--name', 'SATA Controller', '--hostiocache', 'on']
 
 		#vb.customize ['modifyvm', :id, '--autostart-enabled', 'on']
 		#vb.customize ['modifyvm', :id, '--autostop-type', 'acpishutdown']
@@ -88,19 +92,19 @@ _EOT_
 		#vb.customize ['modifyvm', :id, '--x2apic', 'on']
 		#vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
 
-		vb.customize ["modifyvm", :id, "--vram", "64"]
+		vb.customize ['modifyvm', :id, '--vram', '64']
 		vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
 
-		#vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
-		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-		#vb.customize ["modifyvm", :id, "--nat-localhostreachable1", "on"]
-		vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
+		#vb.customize ['modifyvm', :id, '--cableconnected1', 'on']
+		#vb.customize ['modifyvm', :id, '--nat-localhostreachable1', 'on']
 
+		vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
+		vb.customize ['modifyvm', :id, '--nictype1', 'virtio']
 
-		# vb.customize ["setextradata", :id, "VBoxInternal/Devices/VMMDev/0/Config/HeartbeatTimeout", "300000000000"]
+		# vb.customize ['setextradata', :id, 'VBoxInternal/Devices/VMMDev/0/Config/HeartbeatTimeout', '300000000000']
 	end
 
-	config.vm.provision "shell",
+	config.vm.provision 'shell',
 		env: {
 			"NM_C_#{default_if}_GW" => ENV['DPSRV_DOCKER_en0_GW'],
 			"NM_C_#{default_if}_IP" => ENV['DPSRV_DOCKER_en0_IP'],
