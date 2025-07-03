@@ -1,7 +1,7 @@
-required_plugins = %w( vagrant-faster )
-required_plugins.each do |plugin|
-	system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
-end
+#required_plugins = %w( vagrant-faster )
+#required_plugins.each do |plugin|
+	#system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
+#end
 
 Vagrant.configure('2') do |config|
 
@@ -32,6 +32,13 @@ _EOT_
 	config.vm.define 'docker'
 
 	config.vm.box			= 'fedora/41-cloud-base'
+
+	#config.vm.provision "shell", inline: <<-SHELL
+		#sudo sed -i 's/ console=ttyS0[^ ]*//' /etc/default/grub
+#
+		## Regenerate GRUB config for BIOS-based system
+		#sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+	#SHELL
 
 	config.vm.hostname		= "#{ENV['DPSRV_REGION']}-#{ENV['DPSRV_NODE']}"
 
@@ -74,10 +81,15 @@ _EOT_
 		vb.name		= 'docker'
 		# vb.gui		= true
 
-		vb.memory	= 16384
-		vb.cpus		= 6
+		vb.memory	= '8192'
+		vb.cpus		= '3'
 
 		vb.check_guest_additions = true
+
+		vb.customize ['modifyvm', :id, '--cpuexecutioncap', '50']
+
+		vb.customize ["modifyvm", :id, "--uart1", "0x3f8", "4"] # COM1, 4 = IRQ
+		vb.customize ["modifyvm", :id, "--uartmode1", "file", File::NULL]
 
 		vb.customize ['modifyvm', :id, '--ioapic', 'on']
 		vb.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
@@ -92,8 +104,9 @@ _EOT_
 		#vb.customize ['modifyvm', :id, '--x2apic', 'on']
 		#vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
 
-		vb.customize ['modifyvm', :id, '--vram', '64']
-		vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+		vb.customize ['modifyvm', :id, '--vram', '128']
+		#vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
+		vb.customize ['modifyvm', :id, '--graphicscontroller', 'VBoxSVGA']
 
 		#vb.customize ['modifyvm', :id, '--cableconnected1', 'on']
 		#vb.customize ['modifyvm', :id, '--nat-localhostreachable1', 'on']
