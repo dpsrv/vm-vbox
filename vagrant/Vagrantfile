@@ -104,7 +104,7 @@ _EOT_
 		#vb.customize ['modifyvm', :id, '--x2apic', 'on']
 		#vb.customize ['modifyvm', :id, '--hwvirtex', 'on']
 
-		vb.customize ['modifyvm', :id, '--vram', '128']
+		vb.customize ['modifyvm', :id, '--vram', '64']
 		#vb.customize ['modifyvm', :id, '--graphicscontroller', 'vmsvga']
 		vb.customize ['modifyvm', :id, '--graphicscontroller', 'VBoxSVGA']
 
