@@ -81,7 +81,7 @@ _EOT_
 
 dnf install -y git
 
-cp -r /home/host_user/{.config,.gitconfig,.git-credentials} /root/
+cp -r /home/host_user/{.config,.gitconfig,.git-credentials,.docker-credentials} /root/
 
 mkdir -p /opt/dpsrv
 cd /opt/dpsrv
